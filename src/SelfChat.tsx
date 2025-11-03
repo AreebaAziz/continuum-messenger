@@ -1,36 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
+import { useContinuumChat } from './continuum-client-processor-lib/src/index'
+import { Message, Event } from "./continuum-client-processor-lib/src/model";
+import { CoreAction } from "./continuum-client-processor-lib/src/common";
 
 export default function SelfChat() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState("")
+  const {
+    onInitialMessagesLoaded,
+    onMessagesDiff,
+    onNewEvent,
+    messages,
+    localData
+  } = useContinuumChat({
+  })
 
-  const messages = [
-    {
-      id: "test",
-      author: {
-        uid: "testuid",
-        displayName: "Areeba",
+  useEffect(() => {
+    const messagesOnInitialLoad: Message[] = [
+      {
+        id: "test",
+        timestamp: new Date(),
+        author: {
+          uid: "testuid",
+          displayName: "Areeba",
+        },
+        content:
+          "hello world! testy tiadjhif afdnkefj erfjer ver fjklner kjf erkfj erjkf erjf erjk ",
+        props: {
+          modifiedLocally: true,
+        },
       },
-      content:
-        "hello world! testy tiadjhif afdnkefj erfjer ver fjklner kjf erkfj erjkf erjf erjk ",
-      props: {
-        modifiedLocally: true,
+      {
+        id: "test1",
+        timestamp: new Date(),
+        author: {
+          uid: "me",
+          displayName: "me",
+        },
+        content:
+          "hi there! asoidfjhaoif naodijfa dfoiernf reiofj aerfio;erf oierjf aer;oifj",
       },
-    },
-    {
-      id: "test1",
-      author: {
-        uid: "me",
-        displayName: "me",
-      },
-      content:
-        "hi there! asoidfjhaoif naodijfa dfoiernf reiofj aerfio;erf oierjf aer;oifj",
-    },
-  ];
+    ];
+    onInitialMessagesLoaded(messagesOnInitialLoad)
+  }, [])
 
   const sendMessage = () => {
     if (input.trim() === "") return;
     // post event here
+    const event: Event = {
+      author: {
+        uid: 'me',
+        displayName: 'me'
+      },
+      action: CoreAction.sendMessage,
+      content: input.trim()
+    }
+    onNewEvent(event)
     setInput("");
   };
 
@@ -91,3 +116,4 @@ export default function SelfChat() {
     </div>
   );
 }
+
