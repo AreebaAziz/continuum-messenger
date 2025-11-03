@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Message, Event } from './model'
+import { Message, Event, MessagesDiff } from './model'
 import { Plugin } from './plugin'
 import { useState } from "react";
 import { CoreAction } from './common';
@@ -30,7 +30,7 @@ export function useContinuumChat(props: UseContinuumChatProps) {
    * 2) user scrolls up retrieving older messages
    * @param diff TBD
    */
-  const onMessagesDiff = (diff: any) => {
+  const onMessagesDiff = (diff: MessagesDiff) => {
     /**
      * can do an add, edited, and delete messages. 
      * for Add: need to sort the two lists by message timestamp
@@ -38,6 +38,34 @@ export function useContinuumChat(props: UseContinuumChatProps) {
      * for deleted: same as above, do a lienar search and delete the affected message ids 
      */
     console.log("on messages diff")
+    setMessages(messages => {
+      // 1. Process add messages
+      const allMessages: Message[] = diff.add ? [...messages, ...diff.add] : messages
+      if (diff.add) {
+        allMessages.sort((a, b) => (a.timestamp.getTime() - b.timestamp.getTime()))
+      }
+
+      // 2. Process edits 
+      diff.edit?.forEach(editMessage => {
+        allMessages.forEach(msg => {
+          if (editMessage.messageId === msg.id) {
+            msg.content = editMessage.newContent
+          }
+        })
+      })
+
+      // 3. Process deletes 
+      for (let i = 0; diff.delete && i < diff.delete.length; i++) {
+        for (let j = 0; j < allMessages.length; j++) {
+          if (diff.delete[i] === allMessages[j]?.id) {
+            allMessages.splice(j, 1)
+            break
+          }
+        }
+      }
+
+      return allMessages
+    })
   }
 
   /**

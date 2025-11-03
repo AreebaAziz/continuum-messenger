@@ -21,13 +21,8 @@ export interface Author {
   displayName: string
 }
 
-export interface UpdateLocalMessageChange {
-  messageId: string,
-  newMessageContent: string
-}
-
 export interface Changes {
-  updateLocalMessages: UpdateLocalMessageChange[],
+  updateLocalMessages: EditMessage[],
   updateLocalData: Record<string, any>,
   postToLocalEventQueue: LocalEvent[]
 }
@@ -36,4 +31,15 @@ export interface LocalEvent {
   action?: string,
   timestamp?: Date,
   props?: Record<string, any>
+}
+
+export interface MessagesDiff {
+  add?: Message[],
+  edit?: EditMessage[],
+  delete?: string[] // list of message ids
+}
+
+export interface EditMessage {
+  messageId: string,
+  newContent: string
 }

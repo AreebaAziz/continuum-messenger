@@ -42,6 +42,26 @@ export default function SelfChat() {
       },
     ];
     onInitialMessagesLoaded(messagesOnInitialLoad)
+    
+    setTimeout(() => {
+      onMessagesDiff({
+        add: [{
+          id: "test33",
+          timestamp: new Date(),
+          author: {
+            uid: "friend",
+            displayName: "Friend",
+          },
+          content:
+            "a new message from the server", 
+          }],
+        edit: [{
+          messageId: 'test1',
+          newContent: 'hi there!'
+        }],
+        delete: ['test']
+      })
+    }, 3000)
   }, [])
 
   const sendMessage = () => {
