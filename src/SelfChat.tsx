@@ -12,6 +12,7 @@ export default function SelfChat() {
   const [replyToMessage, setReplyToMessage] = useState(null)
   const [editingMessageId, setEditingMessageId] = useState(null)
   const [editingContent, setEditingContent] = useState("")
+  const [showEditHistoryId, setShowEditHistoryId] = useState(null)
 
   const {
     onInitialMessagesLoaded,
@@ -182,87 +183,124 @@ export default function SelfChat() {
 
             const isMe = msg.author?.uid === "me";
             const isEditing = editingMessageId === msg.id;
+            const hasEditHistory = msg.props?.editedMessages && msg.props.editedMessages.length > 0;
+            const showingHistory = showEditHistoryId === msg.id;
 
             return (
-              <div
-                key={msg.id}
-                className={`flex w-full items-center ${isMe ? "justify-end" : "justify-start"}`}
-                onMouseEnter={() => !isEditing && setHoveredMessageId(msg.id)}
-                onMouseLeave={() => setHoveredMessageId(null)}
-              >
-                {/* Three dots menu - left side for "me" */}
-                {isMe && hoveredMessageId === msg.id && !isEditing && (
-                  <button
-                    onClick={(e) => handleMenuClick(e, msg.id)}
-                    className="mr-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
-                  >
-                    <MoreHorizontal size={16} className="text-gray-600" />
-                  </button>
+              <div key={msg.id} className="w-full">
+                {/* Edit history - shown above main message */}
+                {showingHistory && hasEditHistory && (
+                  <div className={`flex w-full mb-2 ${isMe ? "justify-end" : "justify-start"}`}>
+                    <div className="max-w-[75%] space-y-2">
+                      {msg.props.editedMessages.map((editedContent, index) => (
+                        <div
+                          key={`${msg.id}-edit-${index}`}
+                          className={`p-3 rounded-2xl break-words opacity-60 ${
+                            isMe
+                              ? "bg-blue-400 text-white rounded-br-none"
+                              : "bg-gray-300 text-gray-700 rounded-bl-none"
+                          }`}
+                        >
+                          <p>{editedContent}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 <div
-                  className={`p-3 rounded-2xl max-w-[75%] break-words ${
-                    isMe
-                      ? "bg-blue-500 text-white rounded-br-none text-right"
-                      : "bg-gray-200 text-gray-800 rounded-bl-none text-left"
-                  }`}
+                  className={`flex w-full items-center ${isMe ? "justify-end" : "justify-start"}`}
+                  onMouseEnter={() => !isEditing && setHoveredMessageId(msg.id)}
+                  onMouseLeave={() => setHoveredMessageId(null)}
                 >
-                  {msg.author.uid !== "me" && (
-                    <span className="font-semibold text-sm mb-1 italic block">
-                      {msg.author?.displayName}:
-                    </span>
+                  {/* Three dots menu - left side for "me" */}
+                  {isMe && hoveredMessageId === msg.id && !isEditing && (
+                    <button
+                      onClick={(e) => handleMenuClick(e, msg.id)}
+                      className="mr-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                    >
+                      <MoreHorizontal size={16} className="text-gray-600" />
+                    </button>
                   )}
-                  
-                  {/* Show input box when editing */}
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-white"
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveEdit(msg.id)
-                          if (e.key === "Escape") cancelEdit()
-                        }}
-                        autoFocus
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={cancelEdit}
-                          className="px-3 py-1 text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 rounded transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => saveEdit(msg.id)}
-                          className="px-3 py-1 text-xs bg-white hover:bg-gray-100 text-blue-600 font-semibold rounded transition-colors"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p>{msg.content}</p>
-                      {msg.props?.modifiedLocally && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Modified locally
-                        </p>
+
+                  <div className={`max-w-[75%] ${isMe ? "text-right" : "text-left"}`}>
+                    {/* Edited indicator */}
+                    {hasEditHistory && !isEditing && (
+                      <button
+                        onClick={() => setShowEditHistoryId(showingHistory ? null : msg.id)}
+                        className={`text-xs mb-1 hover:underline cursor-pointer ${
+                          isMe ? "text-blue-300" : "text-gray-500"
+                        }`}
+                      >
+                        Edited
+                      </button>
+                    )}
+
+                    <div
+                      className={`p-3 rounded-2xl break-words ${
+                        isMe
+                          ? "bg-blue-500 text-white rounded-br-none"
+                          : "bg-gray-200 text-gray-800 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.author.uid !== "me" && (
+                        <span className="font-semibold text-sm mb-1 italic block">
+                          {msg.author?.displayName}:
+                        </span>
                       )}
-                    </>
+                      
+                      {/* Show input box when editing */}
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-white"
+                            value={editingContent}
+                            onChange={(e) => setEditingContent(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveEdit(msg.id)
+                              if (e.key === "Escape") cancelEdit()
+                            }}
+                            autoFocus
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={cancelEdit}
+                              className="px-3 py-1 text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 rounded transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => saveEdit(msg.id)}
+                              className="px-3 py-1 text-xs bg-white hover:bg-gray-100 text-blue-600 font-semibold rounded transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p>{msg.content}</p>
+                          {msg.props?.modifiedLocally && (
+                            <p className="text-xs text-red-500 mt-1">
+                              Modified locally
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reply icon - right side for others */}
+                  {!isMe && hoveredMessageId === msg.id && (
+                    <button
+                      onClick={() => handleReply(msg)}
+                      className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                    >
+                      <Reply size={16} className="text-gray-600" />
+                    </button>
                   )}
                 </div>
-
-                {/* Reply icon - right side for others */}
-                {!isMe && hoveredMessageId === msg.id && (
-                  <button
-                    onClick={() => handleReply(msg)}
-                    className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
-                  >
-                    <Reply size={16} className="text-gray-600" />
-                  </button>
-                )}
               </div>
             );
           })}
