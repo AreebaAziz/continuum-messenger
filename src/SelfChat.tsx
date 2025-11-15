@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Send, MoreHorizontal } from "lucide-react";
+import { Send, MoreHorizontal, Reply, X } from "lucide-react";
 import { useContinuumChat } from './continuum-client-processor-lib/src/index'
 import { Message, Event } from "./continuum-client-processor-lib/src/model";
 import { CoreAction } from "./continuum-client-processor-lib/src/common";
@@ -9,6 +9,7 @@ export default function SelfChat() {
   const [hoveredMessageId, setHoveredMessageId] = useState(null)
   const [menuMessageId, setMenuMessageId] = useState(null)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [replyToMessage, setReplyToMessage] = useState(null)
 
   const {
     onInitialMessagesLoaded,
@@ -89,12 +90,17 @@ export default function SelfChat() {
     }
     onNewEvent(event)
     setInput("");
+    setReplyToMessage(null);
   };
 
   const handleMenuClick = (e, messageId) => {
     e.stopPropagation()
     setMenuPosition({ x: e.clientX, y: e.clientY })
     setMenuMessageId(messageId)
+  }
+
+  const handleReply = (message) => {
+    setReplyToMessage(message)
   }
 
   const handleEdit = (messageId) => {
@@ -163,19 +169,42 @@ export default function SelfChat() {
                   )}
                 </div>
 
-                {/* Three dots menu - right side for others */}
+                {/* Reply icon - right side for others, Three dots for my messages */}
                 {!isMe && hoveredMessageId === msg.id && (
                   <button
-                    onClick={(e) => handleMenuClick(e, msg.id)}
+                    onClick={() => handleReply(msg)}
                     className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
                   >
-                    <MoreHorizontal size={16} className="text-gray-600" />
+                    <Reply size={16} className="text-gray-600" />
                   </button>
                 )}
               </div>
             );
           })}
         </div>
+
+        {/* Reply preview banner */}
+        {replyToMessage && (
+          <div className="px-3 pt-2 pb-1 border-t bg-gray-50 flex items-center justify-between">
+            <div className="flex items-start flex-1 min-w-0">
+              <Reply size={14} className="text-gray-500 mr-2 mt-1 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-600">
+                  Replying to {replyToMessage.author?.displayName}
+                </p>
+                <p className="text-sm text-gray-500 truncate">
+                  {replyToMessage.content}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setReplyToMessage(null)}
+              className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+            >
+              <X size={16} className="text-gray-600" />
+            </button>
+          </div>
+        )}
 
         {/* Input bar */}
         <div className="p-3 border-t flex items-center">
