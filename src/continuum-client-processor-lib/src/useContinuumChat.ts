@@ -78,6 +78,23 @@ export function useContinuumChat(props: UseContinuumChatProps) {
       // handle edit message by updating the message id's content
     } else if (event.action == CoreAction.deleteMessage) {
       // handle delete message by deleting the message id 
+      if (typeof event.props?.messageId !== 'string') {
+        return // invalid event, ignore
+      }
+      setMessages(messages => {
+        for (let i = 0; i < messages.length; i++) {
+          if (messages[i]?.id === event.props?.messageId) {
+            if (messages[i]?.author?.uid !== 'me') {
+              return messages // only delete your own messages.
+              // TODO find better way to determine own messages
+            }
+            messages.splice(i, 1)
+            break
+          }
+        }
+        return messages
+      })
+      return
     } 
     event.id = uuidv4()
     const newMessage = convertEventToMessage(event)

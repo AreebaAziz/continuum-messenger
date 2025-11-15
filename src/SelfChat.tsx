@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { Send, MoreHorizontal } from "lucide-react";
 import { useContinuumChat } from './continuum-client-processor-lib/src/index'
 import { Message, Event } from "./continuum-client-processor-lib/src/model";
 import { CoreAction } from "./continuum-client-processor-lib/src/common";
 
 export default function SelfChat() {
   const [input, setInput] = useState("")
+  const [hoveredMessageId, setHoveredMessageId] = useState(null)
+  const [menuMessageId, setMenuMessageId] = useState(null)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+
   const {
     onInitialMessagesLoaded,
     onMessagesDiff,
@@ -64,6 +68,14 @@ export default function SelfChat() {
     }, 3000)
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = () => setMenuMessageId(null)
+    if (menuMessageId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [menuMessageId])
+
   const sendMessage = () => {
     if (input.trim() === "") return;
     // post event here
@@ -79,6 +91,34 @@ export default function SelfChat() {
     setInput("");
   };
 
+  const handleMenuClick = (e, messageId) => {
+    e.stopPropagation()
+    setMenuPosition({ x: e.clientX, y: e.clientY })
+    setMenuMessageId(messageId)
+  }
+
+  const handleEdit = (messageId) => {
+    console.log('Edit message:', messageId)
+    setMenuMessageId(null)
+    // Add your edit logic here
+  }
+
+  const handleDelete = (messageId) => {
+    console.log('Delete message:', messageId)
+    onNewEvent({
+      author: {
+        uid: 'me',
+        displayName: 'me'
+      },
+      action: CoreAction.deleteMessage,
+      props: {
+        messageId
+      }
+    })
+    setMenuMessageId(null)
+    // Add your delete logic here
+  }
+
   return (
     <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg flex flex-col h-5/6">
@@ -89,8 +129,20 @@ export default function SelfChat() {
             return (
               <div
                 key={msg.id}
-                className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}
+                className={`flex w-full items-center ${isMe ? "justify-end" : "justify-start"}`}
+                onMouseEnter={() => setHoveredMessageId(msg.id)}
+                onMouseLeave={() => setHoveredMessageId(null)}
               >
+                {/* Three dots menu - left side for "me" */}
+                {isMe && hoveredMessageId === msg.id && (
+                  <button
+                    onClick={(e) => handleMenuClick(e, msg.id)}
+                    className="mr-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                  >
+                    <MoreHorizontal size={16} className="text-gray-600" />
+                  </button>
+                )}
+
                 <div
                   className={`p-3 rounded-2xl max-w-[75%] break-words ${
                     isMe
@@ -110,6 +162,16 @@ export default function SelfChat() {
                     </p>
                   )}
                 </div>
+
+                {/* Three dots menu - right side for others */}
+                {!isMe && hoveredMessageId === msg.id && (
+                  <button
+                    onClick={(e) => handleMenuClick(e, msg.id)}
+                    className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                  >
+                    <MoreHorizontal size={16} className="text-gray-600" />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -133,7 +195,31 @@ export default function SelfChat() {
           </button>
         </div>
       </div>
+
+      {/* Popup menu */}
+      {menuMessageId && (
+        <div
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50"
+          style={{
+            left: `${menuPosition.x}px`,
+            top: `${menuPosition.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => handleEdit(menuMessageId)}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-sm"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => handleDelete(menuMessageId)}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-
