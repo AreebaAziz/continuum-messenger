@@ -7,5 +7,6 @@ export enum CoreAction {
 export enum CoreMessageType {
   message = "message",
   edit = "edit",
-  delete = "delete"
+  delete = "delete",
+  deletedMessage = "deletedMessage"
 }

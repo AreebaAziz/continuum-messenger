@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Message, Event, MessagesDiff } from './model'
 import { Plugin } from './plugin'
 import { useState } from "react";
-import { CoreAction } from './common';
+import { CoreAction, CoreMessageType } from './common';
 import { convertEventToMessage } from './util';
 
 interface UseContinuumChatProps {
@@ -76,25 +76,40 @@ export function useContinuumChat(props: UseContinuumChatProps) {
     console.log("on new event")
     if (event.action == CoreAction.editMessage) {
       // handle edit message by updating the message id's content
+      setMessages(messages => {
+        messages.forEach(msg => {
+          if (msg.id === event.props?.messageId) {
+            msg.props = {
+              ...msg.props,
+              editedMessages: [
+                ...msg.props?.editedMessages || [],
+                msg.content
+              ]
+            }
+            msg.content = event.props?.newContent
+          }
+        })
+        return messages
+      })
     } else if (event.action == CoreAction.deleteMessage) {
       // handle delete message by deleting the message id 
       if (typeof event.props?.messageId !== 'string') {
         return // invalid event, ignore
       }
       setMessages(messages => {
-        for (let i = 0; i < messages.length; i++) {
-          if (messages[i]?.id === event.props?.messageId) {
-            if (messages[i]?.author?.uid !== 'me') {
-              return messages // only delete your own messages.
+        messages.forEach(msg => {
+          if (msg.id === event.props?.messageId) {
+            if (msg.author?.uid !== 'me') {
+              return // only delete your own messages.
               // TODO find better way to determine own messages
             }
-            messages.splice(i, 1)
-            break
+            msg.type = CoreMessageType.deletedMessage
+            msg.content = ""
+            msg.props = {}
           }
-        }
+        })
         return messages
       })
-      return
     } 
     event.id = uuidv4()
     const newMessage = convertEventToMessage(event)

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Send, MoreHorizontal, Reply, X } from "lucide-react";
 import { useContinuumChat } from './continuum-client-processor-lib/src/index'
 import { Message, Event } from "./continuum-client-processor-lib/src/model";
-import { CoreAction } from "./continuum-client-processor-lib/src/common";
+import { CoreAction, CoreMessageType } from "./continuum-client-processor-lib/src/common";
 
 export default function SelfChat() {
   const [input, setInput] = useState("")
@@ -27,6 +27,7 @@ export default function SelfChat() {
       {
         id: "test",
         timestamp: new Date(),
+        type: CoreMessageType.message,
         author: {
           uid: "testuid",
           displayName: "Areeba",
@@ -40,6 +41,7 @@ export default function SelfChat() {
       {
         id: "test1",
         timestamp: new Date(),
+        type: CoreMessageType.message,
         author: {
           uid: "me",
           displayName: "me",
@@ -55,6 +57,7 @@ export default function SelfChat() {
         add: [{
           id: "test33",
           timestamp: new Date(),
+          type: CoreMessageType.message,
           author: {
             uid: "friend",
             displayName: "Friend",
@@ -158,6 +161,25 @@ export default function SelfChat() {
         {/* Chat messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.map((msg) => {
+            // Handle deleted messages
+            if (msg.type === CoreMessageType.deletedMessage) {
+              const isMe = msg.author?.uid === "me";
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}
+                >
+                  <div className="p-3 rounded-2xl max-w-[75%] bg-gray-300 text-gray-500 italic">
+                    <p className="text-sm">Message deleted</p>
+                  </div>
+                </div>
+              );
+            }
+
+            if (msg.type !== CoreMessageType.message) {
+              return
+            }
+
             const isMe = msg.author?.uid === "me";
             const isEditing = editingMessageId === msg.id;
 
