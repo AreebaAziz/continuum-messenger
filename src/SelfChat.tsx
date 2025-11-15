@@ -63,8 +63,13 @@ export default function SelfChat() {
             uid: "friend",
             displayName: "Friend",
           },
-          content:
-            "a new message from the server", 
+          content: "a new message from the server", 
+          props: {
+            editedMessages: [
+              'test edited',
+              'another one here'
+            ]
+          }
           }],
         edit: [{
           messageId: 'test1',

@@ -78,6 +78,9 @@ export function useContinuumChat(props: UseContinuumChatProps) {
       // handle edit message by updating the message id's content
       setMessages(messages => {
         messages.forEach(msg => {
+          if (msg.content === event.props?.newContent) {
+            return  // ignore same edited messages
+          }
           if (msg.id === event.props?.messageId) {
             msg.props = {
               ...msg.props,
