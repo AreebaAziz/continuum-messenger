@@ -10,6 +10,8 @@ export default function SelfChat() {
   const [menuMessageId, setMenuMessageId] = useState(null)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
   const [replyToMessage, setReplyToMessage] = useState(null)
+  const [editingMessageId, setEditingMessageId] = useState(null)
+  const [editingContent, setEditingContent] = useState("")
 
   const {
     onInitialMessagesLoaded,
@@ -104,9 +106,35 @@ export default function SelfChat() {
   }
 
   const handleEdit = (messageId) => {
-    console.log('Edit message:', messageId)
+    const message = messages.find(m => m.id === messageId)
+    if (message) {
+      setEditingMessageId(messageId)
+      setEditingContent(message.content)
+    }
     setMenuMessageId(null)
-    // Add your edit logic here
+  }
+
+  const saveEdit = (messageId) => {
+    if (editingContent.trim() === "") return
+    
+    onNewEvent({
+      author: {
+        uid: 'me',
+        displayName: 'me'
+      },
+      action: CoreAction.editMessage,
+      props: {
+        messageId,
+        newContent: editingContent.trim()
+      }
+    })
+    setEditingMessageId(null)
+    setEditingContent("")
+  }
+
+  const cancelEdit = () => {
+    setEditingMessageId(null)
+    setEditingContent("")
   }
 
   const handleDelete = (messageId) => {
@@ -122,7 +150,6 @@ export default function SelfChat() {
       }
     })
     setMenuMessageId(null)
-    // Add your delete logic here
   }
 
   return (
@@ -132,15 +159,17 @@ export default function SelfChat() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.map((msg) => {
             const isMe = msg.author?.uid === "me";
+            const isEditing = editingMessageId === msg.id;
+
             return (
               <div
                 key={msg.id}
                 className={`flex w-full items-center ${isMe ? "justify-end" : "justify-start"}`}
-                onMouseEnter={() => setHoveredMessageId(msg.id)}
+                onMouseEnter={() => !isEditing && setHoveredMessageId(msg.id)}
                 onMouseLeave={() => setHoveredMessageId(null)}
               >
                 {/* Three dots menu - left side for "me" */}
-                {isMe && hoveredMessageId === msg.id && (
+                {isMe && hoveredMessageId === msg.id && !isEditing && (
                   <button
                     onClick={(e) => handleMenuClick(e, msg.id)}
                     className="mr-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
@@ -161,15 +190,49 @@ export default function SelfChat() {
                       {msg.author?.displayName}:
                     </span>
                   )}
-                  <p>{msg.content}</p>
-                  {msg.props?.modifiedLocally && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Modified locally
-                    </p>
+                  
+                  {/* Show input box when editing */}
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-white"
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEdit(msg.id)
+                          if (e.key === "Escape") cancelEdit()
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={cancelEdit}
+                          className="px-3 py-1 text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 rounded transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => saveEdit(msg.id)}
+                          className="px-3 py-1 text-xs bg-white hover:bg-gray-100 text-blue-600 font-semibold rounded transition-colors"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p>{msg.content}</p>
+                      {msg.props?.modifiedLocally && (
+                        <p className="text-xs text-red-500 mt-1">
+                          Modified locally
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
 
-                {/* Reply icon - right side for others, Three dots for my messages */}
+                {/* Reply icon - right side for others */}
                 {!isMe && hoveredMessageId === msg.id && (
                   <button
                     onClick={() => handleReply(msg)}
