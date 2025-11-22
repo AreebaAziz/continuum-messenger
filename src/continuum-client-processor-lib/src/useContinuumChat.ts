@@ -3,7 +3,7 @@ import { Message, Event, MessagesDiff } from './model'
 import { Plugin } from './plugin'
 import { useState } from "react";
 import { CoreAction, CoreMessageType } from './common';
-import { convertEventToMessage } from './util';
+import { applyMessageUpdate, convertEventToMessage } from './util';
 
 interface UseContinuumChatProps {
   fetchChatState?: (jsonPath: any) => Record<string, any>,
@@ -48,9 +48,7 @@ export function useContinuumChat(props: UseContinuumChatProps) {
       // 2. Process edits 
       diff.edit?.forEach(editMessage => {
         allMessages.forEach(msg => {
-          if (editMessage.messageId === msg.id) {
-            msg.content = editMessage.newContent
-          }
+          applyMessageUpdate(msg, editMessage.newMessageOrContent)
         })
       })
 
@@ -74,27 +72,7 @@ export function useContinuumChat(props: UseContinuumChatProps) {
    */
   const onNewEvent = (event: Event) => {
     console.log("on new event")
-    if (event.action == CoreAction.editMessage) {
-      // handle edit message by updating the message id's content
-      setMessages(messages => {
-        messages.forEach(msg => {
-          if (msg.content === event.props?.newContent) {
-            return  // ignore same edited messages
-          }
-          if (msg.id === event.props?.messageId) {
-            msg.props = {
-              ...msg.props,
-              editedMessages: [
-                ...msg.props?.editedMessages || [],
-                msg.content
-              ]
-            }
-            msg.content = event.props?.newContent
-          }
-        })
-        return messages
-      })
-    } else if (event.action == CoreAction.deleteMessage) {
+     if (event.action == CoreAction.deleteMessage) {
       // handle delete message by deleting the message id 
       if (typeof event.props?.messageId !== 'string') {
         return // invalid event, ignore
@@ -115,6 +93,23 @@ export function useContinuumChat(props: UseContinuumChatProps) {
       })
     } 
     event.id = uuidv4()
+
+    for (const plugin of (props.plugins || [])) {
+      const output = plugin.onNewEvent?.(event)
+      event = output?.event || event
+      if (output?.changes.updateLocalMessages) {
+        setMessages(msgs => {
+          const edits = output?.changes.updateLocalMessages?.(msgs)
+          edits?.forEach(edit => {
+            msgs.filter(m => m.id === edit.messageId).forEach(m => {
+              applyMessageUpdate(m, edit.newMessageOrContent)
+            })
+          })
+          return msgs
+        })
+      }
+    }
+
     const newMessage = convertEventToMessage(event)
     setMessages(msgs => [...msgs, newMessage])
   }

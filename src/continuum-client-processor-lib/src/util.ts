@@ -31,3 +31,12 @@ export const convertEventToMessage = (event: Event): Message => {
 
   return message
 }
+
+export const applyMessageUpdate = (message: Message, update: Message | string) => {
+  if (typeof update === "string") {
+    message.content = update;
+    return;
+  }
+
+  Object.assign(message, update);
+}

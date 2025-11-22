@@ -22,9 +22,9 @@ export interface Author {
 }
 
 export interface Changes {
-  updateLocalMessages: EditMessage[],
-  updateLocalData: Record<string, any>,
-  postToLocalEventQueue: LocalEvent[]
+  updateLocalMessages?: (messages: Message[]) => EditMessage[],
+  updateLocalData?: Record<string, any>,
+  postToLocalEventQueue?: LocalEvent[]
 }
 
 export interface LocalEvent {
@@ -41,5 +41,5 @@ export interface MessagesDiff {
 
 export interface EditMessage {
   messageId: string,
-  newContent: string
+  newMessageOrContent: Message | string
 }

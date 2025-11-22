@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Send, MoreHorizontal, Reply, X } from "lucide-react";
-import { useContinuumChat } from './continuum-client-processor-lib/src/index'
-import { Message, Event } from "./continuum-client-processor-lib/src/model";
+import { EditMessagePlugin, useContinuumChat } from './continuum-client-processor-lib/src/index'
+import { Message, Event, EditMessage } from "./continuum-client-processor-lib/src/model";
 import { CoreAction, CoreMessageType } from "./continuum-client-processor-lib/src/common";
 
 export default function SelfChat() {
@@ -21,6 +21,9 @@ export default function SelfChat() {
     messages,
     localData
   } = useContinuumChat({
+    plugins: [
+      EditMessagePlugin
+    ]
   })
 
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function SelfChat() {
           },
           content: "a new message from the server", 
           props: {
-            editedMessages: [
+            messageHistory: [
               'test edited',
               'another one here'
             ]
@@ -73,7 +76,7 @@ export default function SelfChat() {
           }],
         edit: [{
           messageId: 'test1',
-          newContent: 'hi there!'
+          newMessageOrContent: 'edited message'
         }],
         delete: ['test']
       })
@@ -188,7 +191,7 @@ export default function SelfChat() {
 
             const isMe = msg.author?.uid === "me";
             const isEditing = editingMessageId === msg.id;
-            const hasEditHistory = msg.props?.editedMessages && msg.props.editedMessages.length > 0;
+            const hasEditHistory = msg.props?.messageHistory && msg.props.messageHistory.length > 0;
             const showingHistory = showEditHistoryId === msg.id;
 
             return (
@@ -197,7 +200,7 @@ export default function SelfChat() {
                 {showingHistory && hasEditHistory && (
                   <div className={`flex w-full mb-2 ${isMe ? "justify-end" : "justify-start"}`}>
                     <div className="max-w-[75%] space-y-2">
-                      {msg.props.editedMessages.map((editedContent, index) => (
+                      {msg.props.messageHistory.map((editedContent, index) => (
                         <div
                           key={`${msg.id}-edit-${index}`}
                           className={`p-3 rounded-2xl break-words opacity-60 ${

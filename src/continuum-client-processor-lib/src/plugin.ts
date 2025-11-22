@@ -6,7 +6,7 @@ export interface OnNewEventOutput {
 }
 
 export interface Plugin {
-  onInitialMessagesLoaded: Changes,
-  onMessagesDiff: Changes,
-  onNewEvent: OnNewEventOutput
+  onInitialMessagesLoaded?: Changes,
+  onMessagesDiff?: Changes,
+  onNewEvent?: (event: Event) => OnNewEventOutput
 }
