@@ -9,9 +9,9 @@ export const EditMessagePlugin: Plugin = {
       return {
         changes: {
           updateLocalMessages: (messages) => {
-            let editMessageList: EditMessage[] = []
+            let edits: EditMessage[] = []
             messages.filter(msg => msg.id === event.props?.messageId && msg.content !== event.props?.newContent).forEach(msg => {
-              editMessageList.push({
+              edits.push({
                 messageId: msg.id,
                 newMessageOrContent: {
                   ...msg,
@@ -26,7 +26,7 @@ export const EditMessagePlugin: Plugin = {
                 }
               })
             })
-            return editMessageList
+            return edits
           }
         },
         event

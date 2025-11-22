@@ -72,26 +72,6 @@ export function useContinuumChat(props: UseContinuumChatProps) {
    */
   const onNewEvent = (event: Event) => {
     console.log("on new event")
-     if (event.action == CoreAction.deleteMessage) {
-      // handle delete message by deleting the message id 
-      if (typeof event.props?.messageId !== 'string') {
-        return // invalid event, ignore
-      }
-      setMessages(messages => {
-        messages.forEach(msg => {
-          if (msg.id === event.props?.messageId) {
-            if (msg.author?.uid !== 'me') {
-              return // only delete your own messages.
-              // TODO find better way to determine own messages
-            }
-            msg.type = CoreMessageType.deletedMessage
-            msg.content = ""
-            msg.props = {}
-          }
-        })
-        return messages
-      })
-    } 
     event.id = uuidv4()
 
     for (const plugin of (props.plugins || [])) {

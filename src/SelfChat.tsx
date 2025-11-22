@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Send, MoreHorizontal, Reply, X } from "lucide-react";
-import { EditMessagePlugin, useContinuumChat } from './continuum-client-processor-lib/src/index'
-import { Message, Event, EditMessage } from "./continuum-client-processor-lib/src/model";
+import { DeleteMessagePlugin, EditMessagePlugin, useContinuumChat } from './continuum-client-processor-lib/src/index'
+import { Message, Event } from "./continuum-client-processor-lib/src/model";
 import { CoreAction, CoreMessageType } from "./continuum-client-processor-lib/src/common";
 
 export default function SelfChat() {
@@ -22,7 +22,8 @@ export default function SelfChat() {
     localData
   } = useContinuumChat({
     plugins: [
-      EditMessagePlugin
+      EditMessagePlugin,
+      DeleteMessagePlugin
     ]
   })
 
