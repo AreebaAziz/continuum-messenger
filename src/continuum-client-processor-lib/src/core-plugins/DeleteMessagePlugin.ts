@@ -4,10 +4,8 @@ import { Plugin } from "../plugin";
 
 export const DeleteMessagePlugin: Plugin = {
   onNewEvent: (event: Event) => {
-    console.log("from delete msg plugin", event)
 
     if (event.action === CoreAction.deleteMessage && typeof event.props?.messageId === 'string') {
-      console.log("from plugin, msg id", event.props?.messageId)
       return {
         changes: {
           updateLocalMessages: (messages) => {
