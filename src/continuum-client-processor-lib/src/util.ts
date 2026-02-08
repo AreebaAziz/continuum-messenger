@@ -17,12 +17,12 @@ export const convertEventToMessage = (event: Event): Message => {
     message.content = event.content
   }
 
-  if (event.action == CoreAction.sendMessage) {
-    message.type = CoreMessageType.message
-  } else if (event.action == CoreAction.editMessage) {
+  if (event.action == CoreAction.editMessage) {
     message.type = CoreMessageType.edit
   } else if (event.action == CoreAction.deleteMessage) {
     message.type = CoreMessageType.delete
+  } else {
+    message.type = CoreMessageType.message
   }
 
   if (event.props) {

@@ -94,16 +94,36 @@ export default function SelfChat() {
 
   const sendMessage = () => {
     if (input.trim() === "") return;
-    // post event here
-    const event: Event = {
-      author: {
-        uid: 'me',
-        displayName: 'me'
-      },
-      action: CoreAction.sendMessage,
-      content: input.trim()
+    
+    // Check if this is a reply
+    if (replyToMessage) {
+      const event: Event = {
+        author: {
+          uid: 'me',
+          displayName: 'me'
+        },
+        action: CoreAction.replyToMessage,
+        content: input.trim(),
+        props: {
+          replyToMessageId: replyToMessage.id,
+          replyToContent: replyToMessage.content,
+          replyToAuthor: replyToMessage.author
+        }
+      }
+      onNewEvent(event)
+    } else {
+      // Regular message
+      const event: Event = {
+        author: {
+          uid: 'me',
+          displayName: 'me'
+        },
+        action: CoreAction.sendMessage,
+        content: input.trim()
+      }
+      onNewEvent(event)
     }
-    onNewEvent(event)
+    
     setInput("");
     setReplyToMessage(null);
   };
@@ -245,6 +265,28 @@ export default function SelfChat() {
                       </button>
                     )}
 
+                    {/* Show replied-to message as separate bubble on top */}
+                    {msg.props?.replyToMessageId && (
+                      <div className="mb-1">
+                        <p className="text-xs text-gray-500 mb-1">
+                          {msg.props.replyToAuthor?.uid === "me" 
+                            ? "You replied to yourself" 
+                            : `You replied to ${msg.props.replyToAuthor?.displayName}`}
+                        </p>
+                        <div
+                          className={`p-2 rounded-2xl break-words opacity-70 ${
+                            isMe
+                              ? "bg-gray-400 text-white rounded-br-none"
+                              : "bg-gray-300 text-gray-700 rounded-bl-none"
+                          }`}
+                        >
+                          <p className="text-sm">
+                            {msg.props.replyToContent}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <div
                       className={`p-3 rounded-2xl break-words ${
                         isMe
@@ -367,6 +409,18 @@ export default function SelfChat() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <button
+            onClick={() => {
+              const message = messages.find(m => m.id === menuMessageId)
+              if (message) {
+                handleReply(message)
+              }
+              setMenuMessageId(null)
+            }}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-sm"
+          >
+            Reply
+          </button>
           <button
             onClick={() => handleEdit(menuMessageId)}
             className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-sm"
