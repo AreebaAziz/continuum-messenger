@@ -147,4 +147,18 @@ export const chatService = {
     if (!chatDoc.exists()) return null;
     return { id: chatDoc.id, ...chatDoc.data() } as Chat;
   },
+
+  // Subscribe to a single chat (real-time updates)
+  subscribeToChat: (
+    chatId: string,
+    callback: (chat: Chat | null) => void
+  ): Unsubscribe => {
+    return onSnapshot(doc(db, 'chats', chatId), (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      callback({ id: snapshot.id, ...snapshot.data() } as Chat);
+    });
+  },
 };

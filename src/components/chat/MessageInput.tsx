@@ -61,7 +61,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={disabled ? 'Accept friend request to send messages' : 'Type a message...'}
+          placeholder={disabled ? 'Friend request not yet accepted' : 'Type a message...'}
           disabled={disabled}
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 resize-none max-h-32 disabled:bg-gray-100 disabled:cursor-not-allowed"
           rows={1}

@@ -22,6 +22,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [loading, setLoading] = useState(true);
   const [replyToMessage, setReplyToMessage] = useState<ContinuumMessage | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -33,13 +34,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
     plugins: [EditMessagePlugin, DeleteMessagePlugin],
   });
 
-  // Load chat details
+  // Subscribe to chat details (real-time updates for status changes)
   useEffect(() => {
-    const loadChat = async () => {
-      const chatData = await chatService.getChat(chatId);
+    const unsubscribe = chatService.subscribeToChat(chatId, (chatData) => {
       setChat(chatData);
-    };
-    loadChat();
+    });
+    return unsubscribe;
   }, [chatId]);
 
   // Subscribe to messages
@@ -88,6 +88,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const handleSendMessage = async (content: string) => {
     if (!currentUser || !content.trim()) return;
 
+    setSendError(null);
+
     const props: any = {};
     
     if (replyToMessage) {
@@ -107,6 +109,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       props: Object.keys(props).length > 0 ? props : undefined,
     };
 
+    // Optimistic update
     onNewEvent(event);
 
     // Persist to Firestore
@@ -120,8 +123,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         props: Object.keys(props).length > 0 ? props : undefined,
       });
       setReplyToMessage(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
+      setSendError(err.message || 'Failed to send message. Please try again.');
+      // Remove optimistic message on error
+      // TODO: Implement message removal in Continuum library
     }
   };
 
@@ -185,6 +191,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         participant={otherParticipant}
         chatStatus={chat.status}
       />
+
+      {sendError && (
+        <div className="mx-4 mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm flex items-center justify-between">
+          <span>{sendError}</span>
+          <button
+            onClick={() => setSendError(null)}
+            className="ml-2 text-red-700 hover:text-red-900"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <MessageList
         messages={messages}

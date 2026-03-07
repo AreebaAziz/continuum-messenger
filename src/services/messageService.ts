@@ -73,39 +73,65 @@ export const messageService = {
       props?: any;
     }
   ): Promise<string> => {
-    const batch = writeBatch(db);
+    try {
+      console.log('Sending message to chatId:', chatId, message);
+      
+      // Get chat data first
+      const chatRef = doc(db, 'chats', chatId);
+      const chatSnap = await getDoc(chatRef);
+      
+      if (!chatSnap.exists()) {
+        throw new Error('Chat not found');
+      }
+      
+      const chatData = chatSnap.data() as Chat;
+      console.log('Chat data:', chatData);
 
-    // Add message
-    const messageRef = doc(collection(db, 'chats', chatId, 'messages'));
-    batch.set(messageRef, {
-      chatId,
-      ...message,
-      type: message.type || 'message',
-      timestamp: serverTimestamp(),
-    });
+      const otherParticipantUid = chatData.participants.find(
+        (uid) => uid !== message.authorUid
+      );
 
-    // Update chat's last message
-    const chatRef = doc(db, 'chats', chatId);
-    const chatSnap = await getDoc(chatRef);
-    const chatData = chatSnap.data() as Chat;
-
-    const otherParticipantUid = chatData.participants.find(
-      (uid) => uid !== message.authorUid
-    );
-
-    batch.update(chatRef, {
-      lastMessage: {
-        content: message.content,
+      // Create message document
+      const messageRef = doc(collection(db, 'chats', chatId, 'messages'));
+      const messageData = {
+        chatId,
         authorUid: message.authorUid,
-        timestamp: serverTimestamp(),
+        authorUsername: message.authorUsername,
+        authorDisplayName: message.authorDisplayName,
+        content: message.content,
         type: message.type || 'message',
-      },
-      lastMessageAt: serverTimestamp(),
-      [`unreadCount.${otherParticipantUid}`]: increment(1),
-    });
+        timestamp: serverTimestamp(),
+        props: message.props || {},
+      };
 
-    await batch.commit();
-    return messageRef.id;
+      console.log('Creating message with ID:', messageRef.id, messageData);
+
+      // Use batch for atomic operation
+      const batch = writeBatch(db);
+
+      // Add message
+      batch.set(messageRef, messageData);
+
+      // Update chat's last message
+      batch.update(chatRef, {
+        lastMessage: {
+          content: message.content,
+          authorUid: message.authorUid,
+          timestamp: serverTimestamp(),
+          type: message.type || 'message',
+        },
+        lastMessageAt: serverTimestamp(),
+        [`unreadCount.${otherParticipantUid}`]: increment(1),
+      });
+
+      await batch.commit();
+      console.log('Message sent successfully:', messageRef.id);
+      
+      return messageRef.id;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
   },
 
   // Edit message
