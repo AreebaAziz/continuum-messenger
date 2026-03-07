@@ -369,7 +369,7 @@ onNewEvent({
   <div key={msg.id}>
     {msg.props?.replyToMessageId && (
       <div className="reply-indicator">
-        Replying to {msg.props.replyToAuthor?.displayName}
+        Replied to {msg.props.replyToAuthor?.displayName}
       </div>
     )}
     <div>{msg.content}</div>

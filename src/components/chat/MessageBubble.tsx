@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MoreHorizontal, Reply } from 'lucide-react';
 import { Message } from '../../continuum-client-processor-lib/src/model';
 
@@ -23,6 +23,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [showEditHistory, setShowEditHistory] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuMessageId(null);
+      }
+    };
+
+    if (menuMessageId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [menuMessageId]);
 
   const handleMenuClick = (e: React.MouseEvent, messageId: string) => {
     e.stopPropagation();
@@ -78,7 +93,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                     : 'bg-gray-300 text-gray-700 rounded-bl-none'
                 }`}
               >
-                <p>{editedContent}</p>
+                <p className="text-sm">{editedContent}</p>
               </div>
             ))}
           </div>
@@ -86,7 +101,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       )}
 
       <div
-        className={`flex w-full items-center ${isOwn ? 'justify-end' : 'justify-start'}`}
+        className={`flex w-full items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
         onMouseEnter={() => !isEditing && setHoveredMessageId(message.id)}
         onMouseLeave={() => setHoveredMessageId(null)}
       >
@@ -94,61 +109,73 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {isOwn && hoveredMessageId === message.id && !isEditing && (
           <button
             onClick={(e) => handleMenuClick(e, message.id)}
-            className="mr-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+            className="mb-1 p-1.5 hover:bg-gray-200 rounded-full transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
           >
             <MoreHorizontal size={16} className="text-gray-600" />
           </button>
         )}
 
-        <div className={`max-w-[75%] ${isOwn ? 'text-right' : 'text-left'}`}>
+        <div className={`max-w-[75%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+          {/* Friend's name - outside bubble */}
+          {!isOwn && (
+            <span className="text-xs font-medium text-gray-600 mb-1 ml-3">
+              {message.author?.displayName}
+            </span>
+          )}
+
           {/* Edited indicator */}
           {hasEditHistory && !isEditing && (
             <button
               onClick={() => setShowEditHistory(!showEditHistory)}
               className={`text-xs mb-1 hover:underline cursor-pointer ${
-                isOwn ? 'text-blue-300' : 'text-gray-500'
+                isOwn ? 'text-blue-400 mr-3' : 'text-gray-500 ml-3'
               }`}
             >
               Edited
             </button>
           )}
 
-          {/* Replied-to message */}
+          {/* Replied-to message - more compact and distinct */}
           {message.props?.replyToMessageId && (
-            <div className="mb-1">
-              <p className="text-xs text-gray-500 mb-1">
-                {message.props.replyToAuthorUid === message.author?.uid
-                  ? 'You replied to yourself'
-                  : `You replied to ${message.props.replyToAuthorDisplayName}`}
+            <div className="mb-1 w-full">
+              <p className={`text-xs text-gray-500 mb-1 ${isOwn ? 'mr-3 text-right' : 'ml-3 text-left'}`}>
+                {isOwn ? (
+                  // Your message replying to someone
+                  message.props.replyToAuthorUid === message.author?.uid
+                    ? 'You replied to yourself'
+                    : `Replied to ${message.props.replyToAuthorDisplayName}`
+                ) : (
+                  // Friend's message replying to someone
+                  message.props.replyToAuthorUid === message.author?.uid
+                    ? `${message.author?.displayName} replied to themselves`
+                    : `Replied to ${message.props.replyToAuthorDisplayName}`
+                )}
               </p>
-              <div
-                className={`p-2 rounded-2xl break-words opacity-70 ${
-                  isOwn
-                    ? 'bg-gray-400 text-white rounded-br-none'
-                    : 'bg-gray-300 text-gray-700 rounded-bl-none'
-                }`}
-              >
-                <p className="text-sm">{message.props.replyToContent}</p>
+              <div className={isOwn ? 'flex justify-end mr-3' : 'flex justify-start ml-3'}>
+                <div
+                  className={`inline-block px-3 py-1.5 rounded-lg border-l-2 text-sm max-w-xs ${
+                    isOwn
+                      ? 'bg-blue-50 border-blue-300 text-blue-700'
+                      : 'bg-gray-100 border-gray-400 text-gray-600'
+                  }`}
+                >
+                  <p className="italic break-words">{message.props.replyToContent}</p>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Main message bubble */}
           <div
-            className={`p-3 rounded-2xl break-words ${
+            className={`px-4 py-2 rounded-2xl break-words inline-block ${
               isOwn
-                ? 'bg-blue-500 text-white rounded-br-none'
-                : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                ? 'bg-blue-500 text-white rounded-br-md'
+                : 'bg-gray-200 text-gray-800 rounded-bl-md'
             }`}
           >
-            {!isOwn && (
-              <span className="font-semibold text-sm mb-1 italic block">
-                {message.author?.displayName}:
-              </span>
-            )}
-
             {/* Editing mode */}
             {isEditing ? (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-[200px]">
                 <input
                   type="text"
                   className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-white"
@@ -176,7 +203,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </div>
               </div>
             ) : (
-              <p>{message.content}</p>
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
             )}
           </div>
         </div>
@@ -185,7 +212,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {!isOwn && hoveredMessageId === message.id && (
           <button
             onClick={() => handleReply(message)}
-            className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+            className="mb-1 p-1.5 hover:bg-gray-200 rounded-full transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
           >
             <Reply size={16} className="text-gray-600" />
           </button>
@@ -195,15 +222,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {/* Popup menu */}
       {menuMessageId === message.id && (
         <div
+          ref={menuRef}
           className="fixed bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50"
           style={{
             left: `${menuPosition.x}px`,
             top: `${menuPosition.y}px`,
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => handleReply(message)}
+            onClick={() => {
+              handleReply(message);
+              setMenuMessageId(null);
+            }}
             className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-sm"
           >
             Reply

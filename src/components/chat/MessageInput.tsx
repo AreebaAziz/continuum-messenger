@@ -34,23 +34,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
     <div className="border-t border-gray-200 bg-white">
       {/* Reply Banner */}
       {replyToMessage && (
-        <div className="px-6 pt-3 pb-2 bg-gray-50 flex items-center justify-between">
+        <div className="px-4 pt-3 pb-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
           <div className="flex items-start flex-1 min-w-0">
-            <Reply size={14} className="text-gray-500 mr-2 mt-1 flex-shrink-0" />
+            <Reply size={16} className="text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-600">
-                Replying to {replyToMessage.author?.displayName}
+              <p className="text-xs font-semibold text-blue-700">
+                Replied to {replyToMessage.author?.displayName}
               </p>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="text-sm text-blue-600 truncate">
                 {replyToMessage.content}
               </p>
             </div>
           </div>
           <button
             onClick={onCancelReply}
-            className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+            className="ml-2 p-1 hover:bg-blue-100 rounded-full transition-colors flex-shrink-0"
           >
-            <X size={16} className="text-gray-600" />
+            <X size={16} className="text-blue-600" />
           </button>
         </div>
       )}
@@ -63,10 +63,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={disabled ? 'Friend request not yet accepted' : 'Type a message...'}
           disabled={disabled}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 resize-none max-h-32 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-3 border border-gray-300 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none max-h-32 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
           rows={1}
           style={{
-            minHeight: '40px',
+            minHeight: '44px',
             height: 'auto',
           }}
           onInput={(e) => {
@@ -78,7 +78,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <button
           onClick={handleSend}
           disabled={disabled || input.trim() === ''}
-          className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          className="p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-sm hover:shadow-md"
         >
           <Send size={20} />
         </button>

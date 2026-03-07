@@ -364,7 +364,7 @@ export default function SelfChat() {
               <Reply size={14} className="text-gray-500 mr-2 mt-1 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-600">
-                  Replying to {replyToMessage.author?.displayName}
+                  Replied to {replyToMessage.author?.displayName}
                 </p>
                 <p className="text-sm text-gray-500 truncate">
                   {replyToMessage.content}
