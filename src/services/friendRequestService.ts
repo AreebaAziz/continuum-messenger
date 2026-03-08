@@ -80,8 +80,12 @@ export const friendRequestService = {
       createdAt: serverTimestamp(),
     });
 
-    // Send system message
-    await messageService.sendSystemMessage(chatId, 'Friend request sent');
+    // Send system message (non-blocking, ignore errors due to eventual consistency)
+    try {
+      await messageService.sendSystemMessage(chatId, 'Friend request sent');
+    } catch (err) {
+      console.warn('System message failed (non-critical):', err);
+    }
   },
 
   // Find user by username

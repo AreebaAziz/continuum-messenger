@@ -34,7 +34,7 @@ export const chatService = {
           id: doc.id,
           ...doc.data(),
         } as Chat))
-        .filter((chat) => chat.status !== 'declined' || chat.initiatorUid === uid);
+        .filter((chat) => chat.status !== 'declined');
       callback(chats);
     });
   },
