@@ -15,9 +15,10 @@ import MessageInput from './MessageInput';
 
 interface ChatWindowProps {
   chatId: string;
+  onBack?: () => void;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const { currentUser } = useAuth();
   const [chat, setChat] = useState<Chat | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,6 +191,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       <ChatHeader
         participant={otherParticipant}
         chatStatus={chat.status}
+        onBack={onBack}
       />
 
       {sendError && (
