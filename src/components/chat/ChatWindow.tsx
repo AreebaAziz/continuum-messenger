@@ -25,6 +25,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   const [replyToMessage, setReplyToMessage] = useState<ContinuumMessage | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
+
+  // Track if component is mounted
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const {
     onInitialMessagesLoaded,
@@ -38,22 +47,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
   // Subscribe to chat details (real-time updates for status changes)
   useEffect(() => {
     const unsubscribe = chatService.subscribeToChat(chatId, (chatData) => {
-      setChat(chatData);
+      if (isMountedRef.current) {
+        setChat(chatData);
+      }
     });
     return unsubscribe;
   }, [chatId]);
 
   // Subscribe to messages
   useEffect(() => {
-    setLoading(true);
+    if (isMountedRef.current) {
+      setLoading(true);
+    }
     
     const unsubscribe = messageService.subscribeToMessages(
       chatId,
       20,
       (firestoreMessages) => {
-        const continuumMessages = firestoreMessages.map(convertToMessage);
-        onInitialMessagesLoaded(continuumMessages);
-        setLoading(false);
+        if (isMountedRef.current) {
+          const continuumMessages = firestoreMessages.map(convertToMessage);
+          onInitialMessagesLoaded(continuumMessages);
+          setLoading(false);
+        }
       }
     );
 
@@ -171,10 +186,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId, onBack }) => {
     }
   };
 
-  if (!currentUser || !chat) {
+  if (!currentUser) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!chat) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500">Loading chat...</div>
       </div>
     );
   }

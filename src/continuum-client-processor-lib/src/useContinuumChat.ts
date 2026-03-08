@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Message, Event, MessagesDiff } from './model'
 import { Plugin } from './plugin'
-import { useState } from "react";
+import React, { useState } from "react";
 import { applyMessageUpdate, convertEventToMessage } from './util';
 
 interface UseContinuumChatProps {

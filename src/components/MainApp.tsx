@@ -37,6 +37,7 @@ const MainApp: React.FC = () => {
         {selectedChatId ? (
           <div className="flex-1 flex">
             <ChatWindow 
+              key={selectedChatId}
               chatId={selectedChatId} 
               onBack={handleBackToList}
             />
